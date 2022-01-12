@@ -69,6 +69,8 @@ app.use(apiMetrics())
 | `responseSizeBuckets`    | `Array<Number>` | Buckets for response size in bytes | `[5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000]` |
 | `useUniqueHistogramName` | `Boolean` | Add to metrics names the project name as a prefix (from package.json) | `false` |
 | `metricsPrefix`          | `String`  | A custom metrics names prefix, the package will add underscore between your prefix to the metric name | |
+| `contentType`            | `String`  | Used to define the type of registry and metrics standard used (Prometheus or OpenMetrics) | Prometheus |
+| `enableExemplars`        | `Boolean` | Flag to enable exemplars on metrics, the default metrics will try to automatically detect and use OpenTelemetry traces if provided. | `false` |
 | `excludeRoutes`          | `Array<String>` | Array of routes to exclude. Routes should be in your framework syntax | |
 | `includeQueryParams`     | `Boolean` | Indicate if to include query params in route, the query parameters will be sorted in order to eliminate the number of unique labels | `false` |
 | `additionalLabels`       | `Array<String>` | Indicating custom labels that can be included on each `http_*` metric. Use in conjunction with `extractAdditionalLabelValuesFn`. |

@@ -8,6 +8,7 @@ const WILDCARD_ROUTE_ENDING = '(.*)';
 class KoaMiddleware {
     constructor(setupOptions) {
         this.setupOptions = setupOptions;
+        Prometheus.register.setContentType(setupOptions.contentType);
     }
 
     _collectDefaultServerMetrics(timeout) {

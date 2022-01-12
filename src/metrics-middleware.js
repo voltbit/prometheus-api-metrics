@@ -18,12 +18,16 @@ module.exports = (appVersion, projectName, framework = 'express') => {
             responseSizeBuckets,
             useUniqueHistogramName,
             metricsPrefix,
+            contentType,
+            enableExemplars,
             excludeRoutes,
             includeQueryParams,
             additionalLabels = [],
             extractAdditionalLabelValuesFn
         } = options;
         debug(`Init metrics middleware with options: ${JSON.stringify(options)}`);
+
+        Prometheus.register.setContentType(contentType);
 
         setupOptions.metricsRoute = utils.validateInput({
             input: metricsPath,
@@ -89,21 +93,24 @@ module.exports = (appVersion, projectName, framework = 'express') => {
             name: metricNames.http_request_duration_seconds,
             help: 'Duration of HTTP requests in seconds',
             labelNames: metricLabels,
-            buckets: durationBuckets || defaultDurationSecondsBuckets
+            buckets: durationBuckets || defaultDurationSecondsBuckets,
+            enableExemplars: enableExemplars,
         });
 
         setupOptions.requestSizeHistogram = Prometheus.register.getSingleMetric(metricNames.http_request_size_bytes) || new Prometheus.Histogram({
             name: metricNames.http_request_size_bytes,
             help: 'Size of HTTP requests in bytes',
             labelNames: metricLabels,
-            buckets: requestSizeBuckets || defaultSizeBytesBuckets
+            buckets: requestSizeBuckets || defaultSizeBytesBuckets,
+            enableExemplars: enableExemplars,
         });
 
         setupOptions.responseSizeHistogram = Prometheus.register.getSingleMetric(metricNames.http_response_size_bytes) || new Prometheus.Histogram({
             name: metricNames.http_response_size_bytes,
             help: 'Size of HTTP response in bytes',
             labelNames: metricLabels,
-            buckets: responseSizeBuckets || defaultSizeBytesBuckets
+            buckets: responseSizeBuckets || defaultSizeBytesBuckets,
+            enableExemplars: enableExemplars,
         });
 
         return frameworkMiddleware(framework);

@@ -6,6 +6,7 @@ const utils = require('./utils');
 class ExpressMiddleware {
     constructor(setupOptions) {
         this.setupOptions = setupOptions;
+        Prometheus.register.setContentType(setupOptions.contentType);
     }
 
     _collectDefaultServerMetrics(timeout) {

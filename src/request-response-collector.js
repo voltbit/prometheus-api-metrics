@@ -21,6 +21,7 @@ class HttpMetricsCollector {
         const setup = _init(options);
         this.southboundResponseTimeHistogram = setup.southboundResponseTimeHistogram;
         this.southboundClientErrors = setup.southboundClientErrors;
+        Prometheus.register.setContentType(options.contentType);
     };
 
     collect(res) {
@@ -95,7 +96,7 @@ function _init(options = {}) {
         southbound_client_errors_count: 'southbound_client_errors_count'
     };
 
-    const { durationBuckets, countClientErrors, useUniqueHistogramName, prefix } = options;
+    const { durationBuckets, countClientErrors, useUniqueHistogramName, prefix, enableExemplars } = options;
     metricNames = utils.getMetricNames(metricNames, useUniqueHistogramName, prefix, projectName);
 
     southboundResponseTimeHistogram = Prometheus.register.getSingleMetric(metricNames.southbound_request_duration_seconds) ||
@@ -103,14 +104,16 @@ function _init(options = {}) {
             name: metricNames.southbound_request_duration_seconds,
             help: 'Duration of Southbound queries in seconds',
             labelNames: ['method', 'route', 'status_code', 'target', 'type'],
-            buckets: durationBuckets || [0.001, 0.005, 0.015, 0.03, 0.05, 0.1, 0.15, 0.3, 0.5]
+            buckets: durationBuckets || [0.001, 0.005, 0.015, 0.03, 0.05, 0.1, 0.15, 0.3, 0.5],
+            enableExemplars: enableExemplars || false,
         });
 
     if (countClientErrors !== false) {
         southboundClientErrors = Prometheus.register.getSingleMetric(metricNames.southbound_client_errors_count) || new Prometheus.Counter({
             name: metricNames.southbound_client_errors_count,
             help: 'Southbound http client error counter',
-            labelNames: ['target', 'error']
+            labelNames: ['target', 'error'],
+            enableExemplars: enableExemplars || false,
         });
     }
 
