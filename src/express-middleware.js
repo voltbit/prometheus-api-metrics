@@ -6,12 +6,11 @@ const utils = require('./utils');
 class ExpressMiddleware {
     constructor(setupOptions) {
         this.setupOptions = setupOptions;
-        Prometheus.register.setContentType(setupOptions.contentType);
     }
 
     _collectDefaultServerMetrics(timeout) {
         const NUMBER_OF_CONNECTIONS_METRICS_NAME = 'expressjs_number_of_open_connections';
-        this.setupOptions.numberOfConnectionsGauge = Prometheus.register.getSingleMetric(NUMBER_OF_CONNECTIONS_METRICS_NAME) || new Prometheus.Gauge({
+        this.setupOptions.numberOfConnectionsGauge = this.setupOptions.register.getSingleMetric(NUMBER_OF_CONNECTIONS_METRICS_NAME) || new Prometheus.Gauge({
             name: NUMBER_OF_CONNECTIONS_METRICS_NAME,
             help: 'Number of open connections to the Express.js server'
         });
@@ -44,9 +43,19 @@ class ExpressMiddleware {
                 code: res.statusCode,
                 ...this.setupOptions.extractAdditionalLabelValuesFn(req, res)
             };
-            this.setupOptions.requestSizeHistogram.observe(labels, req.metrics.contentLength);
-            req.metrics.timer(labels);
-            this.setupOptions.responseSizeHistogram.observe(labels, responseLength);
+            let exemplarLabels = null;
+            if (this.setupOptions.enableExemplars) {
+                exemplarLabels = utils.getTraceContextIds();
+            }
+            if (exemplarLabels !== null) {
+                this.setupOptions.requestSizeHistogram.observe({  labels: labels, value: req.metrics.contentLength, exemplarLabels: exemplarLabels });
+                // req.metrics.timer(labels);
+                this.setupOptions.responseSizeHistogram.observe({ labels: labels, value: responseLength, exemplarLabels: exemplarLabels });
+            } else {
+                this.setupOptions.requestSizeHistogram.observe(labels, req.metrics.contentLength);
+                req.metrics.timer(labels);
+                this.setupOptions.responseSizeHistogram.observe(labels, responseLength);
+            }
             debug(`metrics updated, request length: ${req.metrics.contentLength}, response length: ${responseLength}`);
         }
     }
@@ -102,12 +111,12 @@ class ExpressMiddleware {
 
         if (routeUrl === this.setupOptions.metricsRoute) {
             debug('Request to /metrics endpoint');
-            res.set('Content-Type', Prometheus.register.contentType);
-            return res.end(await Prometheus.register.metrics());
+            res.set('Content-Type', this.setupOptions.contentType);
+            return res.end(await this.setupOptions.register.metrics());
         }
         if (routeUrl === `${this.setupOptions.metricsRoute}.json`) {
             debug('Request to /metrics endpoint');
-            return res.json(await Prometheus.register.getMetricsAsJSON());
+            return res.json(await this.setupOptions.register.getMetricsAsJSON());
         }
 
         req.metrics = {

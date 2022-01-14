@@ -27,13 +27,17 @@ module.exports = (appVersion, projectName, framework = 'express') => {
         } = options;
         debug(`Init metrics middleware with options: ${JSON.stringify(options)}`);
 
-        Prometheus.register.setContentType(contentType);
+        setupOptions.register = Prometheus.register;
+        setupOptions.register.setContentType(contentType);
+
+        setupOptions.enableExemplars = enableExemplars;
+        setupOptions.contentType = contentType;
 
         setupOptions.metricsRoute = utils.validateInput({
             input: metricsPath,
             isValidInputFn: utils.isString,
             defaultValue: '/metrics',
-            errorMessage: 'metricsPath should be an string'
+            errorMessage: 'metricsPath should be a string'
         });
 
         setupOptions.excludeRoutes = utils.validateInput({
@@ -73,7 +77,7 @@ module.exports = (appVersion, projectName, framework = 'express') => {
             projectName
         );
 
-        Prometheus.collectDefaultMetrics({ timeout: defaultMetricsInterval, prefix: `${metricNames.defaultMetricsPrefix}` });
+        Prometheus.collectDefaultMetrics({ timeout: defaultMetricsInterval, prefix: `${metricNames.defaultMetricsPrefix}`, enableExemplars: enableExemplars });
 
         PrometheusRegisterAppVersion(appVersion, metricNames.app_version);
 

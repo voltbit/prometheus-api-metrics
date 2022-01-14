@@ -1,5 +1,7 @@
 'use strict';
 
+const OtelApi = require('@opentelemetry/api');
+
 const getMetricNames = (metricNames, useUniqueHistogramName, metricsPrefix, projectName) => {
     const prefix = useUniqueHistogramName === true ? projectName : metricsPrefix;
 
@@ -32,9 +34,22 @@ const validateInput = ({ input, isValidInputFn, defaultValue, errorMessage }) =>
     return defaultValue;
 };
 
+const getTraceContextIds = () => {
+    let contextIds = {};
+    let current_span = OtelApi.trace.getSpan(OtelApi.context.active());
+    if(current_span) {
+        contextIds = {
+            'traceId': current_span.spanContext().traceId,
+            'spanId': current_span.spanContext().spanId
+        };
+    }
+    return contextIds;
+};
+
 module.exports.getMetricNames = getMetricNames;
 module.exports.isArray = isArray;
 module.exports.isFunction = isFunction;
 module.exports.isString = isString;
 module.exports.shouldLogMetrics = shouldLogMetrics;
 module.exports.validateInput = validateInput;
+module.exports.getTraceContextIds = getTraceContextIds;
